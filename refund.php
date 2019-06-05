@@ -1,3 +1,5 @@
+<p>Giao dịch đang được xử lý...</p>
+
 <?php 
 
 require_once "zalopay/helper.php";

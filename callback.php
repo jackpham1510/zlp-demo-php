@@ -15,7 +15,7 @@ if ($is_post_method) {
     
     if ($result['returncode'] === 1) {
       # Giao dịch thành công, tiền hành xử lý đơn hàng
-      $data = JSON::decode($dataStr);
+      $data = JSON::decode($params["data"]);
       OrderRespository::Update([
         "apptransid" => $data["apptransid"],
         "zptransid" => $data["zptransid"],

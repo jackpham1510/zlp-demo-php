@@ -8,7 +8,7 @@ class RefundRespository {
     $mrefundid = $data["mrefundid"];
     $zptransid = $data["zptransid"];
     $amount = $data["amount"];
-    $ok = $conn->query("INSERT INTO `refunds`(`mrefundid`, `zptransid`, `amount`) VALUES('$mrefundid', '$zptransid', $amount, $status)");
+    $ok = $conn->query("INSERT INTO `refunds`(`mrefundid`, `zptransid`, `amount`) VALUES('$mrefundid', '$zptransid', $amount)");
     $conn->close();
     return $ok;
   }
