@@ -45,6 +45,25 @@ CREATE TABLE `refunds` (
 }
 ```
 
+5. Thay đổi app config trong [`config.json`](./config.json)
+
+```json
+{
+  "appid": "<appid>",
+  "key1": "<key1>",
+  "key2": "<key2>"
+}
+```
+
+6. Thay đổi RSA public key trong [`publickey.pem`](./publickey.pem)
+
+```pem
+-----BEGIN PUBLIC KEY-----
+xxxxxx (64 chars)
+xxxxxx (64 chars)
+-----END PUBLIC KEY-----
+```
+
 ## Các API tích hợp trong Demo
 
 * Xử lý callback
