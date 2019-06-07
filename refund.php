@@ -13,9 +13,12 @@ if ($is_post_method) {
   $refundReq = ZaloPayHelper::NewRefund($_POST);
   $result = ZaloPayHelper::Refund($refundReq);
 
+  # returncode == 1: thành công
+  # returncode > 1: đang xử lý
+  # returncode < 1: thất bại
   if ($result["returncode"] >= 1) {
+    # Lấy trạng thái cuối cùng của refund
     while (1) {
-      # Tiến hành lấy trạng thái refund cuối cùng
       $refund_status = ZaloPayHelper::GetRefundStatus($result["mrefundid"]);
       $c = $refund_status["returncode"];
 

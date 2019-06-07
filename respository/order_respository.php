@@ -6,7 +6,6 @@ class OrderRespository {
   private static $ORDER_PER_PAGE = 10;
 
   static function New(Array $data) {
-    $embeddata = $data['embeddata'];
     $conn = Provider::Connect();
     $sql = sprintf("INSERT INTO `orders`(`apptransid`, `zptransid`, `description`, `amount`, `timestamp`, `channel`, `status`) VALUES ('%s',NULL,'%s',%d,%d,NULL,0)",
       $data["apptransid"],
