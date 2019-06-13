@@ -3,8 +3,8 @@
 require_once "provider/provider.php";
 
 class RefundRespository {
-  static function New(Array $data) {
-    $conn = Provider::Connect();
+  static function add(Array $data) {
+    $conn = Provider::connect();
     $mrefundid = $data["mrefundid"];
     $zptransid = $data["zptransid"];
     $amount = $data["amount"];
@@ -13,8 +13,8 @@ class RefundRespository {
     return $ok;
   }
 
-  static function GetByZptransid(string $zptransid) {
-    $refunds = Provider::Select("SELECT * FROM `refunds` WHERE `zptransid`=$zptransid");
+  static function getByZptransid(string $zptransid) {
+    $refunds = Provider::select("SELECT * FROM `refunds` WHERE `zptransid`=$zptransid");
     return $refunds;
   }
 }

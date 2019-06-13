@@ -5,7 +5,7 @@ require_once "config/config.php";
 class Provider {
   private static $db;
 
-  static function Connect() {
+  static function connect() {
     $conn = new mysqli(
       Config::get()['db']['host'] . ':' . Config::get()['db']['port'],
       Config::get()['db']['user'],
@@ -23,8 +23,8 @@ class Provider {
   }
 
 
-  static function Select($sql) {
-    $conn = self::Connect();
+  static function select($sql) {
+    $conn = self::connect();
     $result = [];
     $resultRaw = $conn->query($sql);
 

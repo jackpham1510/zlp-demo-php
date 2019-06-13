@@ -5,8 +5,8 @@ require_once "provider/provider.php";
 class OrderRespository {
   private static $ORDER_PER_PAGE = 10;
 
-  static function New(Array $data) {
-    $conn = Provider::Connect();
+  static function add(Array $data) {
+    $conn = Provider::connect();
     $sql = sprintf("INSERT INTO `orders`(`apptransid`, `zptransid`, `description`, `amount`, `timestamp`, `channel`, `status`) VALUES ('%s',NULL,'%s',%d,%d,NULL,0)",
       $data["apptransid"],
       $data["description"],
@@ -18,8 +18,8 @@ class OrderRespository {
     return $ok;
   }
 
-  static function Update(Array $data) {
-    $conn = Provider::Connect();
+  static function update(Array $data) {
+    $conn = Provider::connect();
     $apptransid = $data["apptransid"];
     $zptransid = $data["zptransid"];
     $channel = $data["channel"];
@@ -29,9 +29,9 @@ class OrderRespository {
     return $ok;
   }
 
-  static function Paginate(int $page = 1) {
+  static function paginate(int $page = 1) {
     $offset = ($page - 1) * self::$ORDER_PER_PAGE;
-    $orders = Provider::Select(
+    $orders = Provider::select(
       "SELECT `o`.*, sum(
         CASE 
           WHEN `r`.`amount` IS NULL
@@ -44,7 +44,7 @@ class OrderRespository {
       GROUP BY `o`.`apptransid`, `o`.`zptransid`, `o`.`description`, `o`.`amount`, `o`.`timestamp`, `o`.`status`, `o`.channel
       ORDER BY `o`.`timestamp` DESC
       LIMIT $offset, ".self::$ORDER_PER_PAGE);
-    $totalOrder = Provider::Select("SELECT COUNT(*) as totalOrder FROM `orders`")[0]["totalOrder"];
+    $totalOrder = Provider::select("SELECT COUNT(*) as totalOrder FROM `orders`")[0]["totalOrder"];
 
     return [
       "currentPage" => $page,
@@ -54,7 +54,7 @@ class OrderRespository {
     ];
   }
 
-  static function GetByApptransId(string $apptransid) {
-    return Provider::Select("SELECT * FROM `orders` WHERE `apptransid`='$apptransid'")[0];
+  static function getByApptransId(string $apptransid) {
+    return Provider::select("SELECT * FROM `orders` WHERE `apptransid`='$apptransid'")[0];
   }
 }

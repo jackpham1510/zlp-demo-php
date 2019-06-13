@@ -2,7 +2,7 @@
   require "respository/order_respository.php";
   require "respository/refund_respository.php";
 
-  function Status($status) {
+  function statusHTML($status) {
     switch ($status) { 
       case -1: return "<span class='text-danger'>Thất bại</span>";
       case 1: return "<span class='text-success'>Thành công</span>";
@@ -17,7 +17,7 @@
     $page = (int) $_GET['page'];
   }
 
-  $data = OrderRespository::Paginate($page);
+  $data = OrderRespository::paginate($page);
 ?>
 
 <!DOCTYPE html>
@@ -68,7 +68,7 @@
           <td width="200"><?php echo date("d/m/Y H:i:s", $order["timestamp"] / 1000) ?></td>
           <td width="100"><?php echo $order["amount"] ?></td>
           <td width="200"><?php echo $order["total_refund_amount"] ?></td>
-          <td width="150"><?php echo Status($order["status"]) ?></td>
+          <td width="150"><?php echo statusHTML($order["status"]) ?></td>
           <td width="150">
             <?php if ($order["status"] === "1") { ?>
               <button class="btn btn-primary refund"

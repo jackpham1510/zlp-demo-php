@@ -31,8 +31,8 @@
 <small class="text-danger ml-3">
 <?php 
   require_once "utils/ngrok.php";
-  if (!empty(Ngrok::$public_url)) {
-    echo "Public url: <u>".Ngrok::$public_url."</u>";
+  if (!empty(Ngrok::$PUBLIC_URL)) {
+    echo "Public url: <u>".Ngrok::$PUBLIC_URL."</u>";
   }
 ?>
 </small>

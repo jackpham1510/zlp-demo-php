@@ -6,29 +6,31 @@ require_once "utils/http.php";
 require_once "utils/ngrok.php";
 require_once "mac.php";
 
-class ZaloPayHelper {
-  private static $publickey;
-  private static $uid;
+class ZaloPayHelper
+{
+  private static $PUBLIC_KEY;
+  private static $UID;
 
-  static function init() {
+  static function init()
+  {
     # Public key nhận được khi đăng ký ứng dụng với zalopay
-    self::$publickey = file_get_contents('publickey.pem');
-    self::$uid = GetTimestamp();
+    self::$PUBLIC_KEY = file_get_contents('publickey.pem');
+    self::$UID = getTimestamp();
   }
 
-  /*
+  /**
    * Kiểm callback có hợp lệ hay không 
    * 
-   * Tham số: Array { data: String, mac: String }
-   * Trả về: Array { returncode: int, returnmessage: String }
-   * Xem thêm: https://docs.zalopay.vn/docs/general/overview.html#Callback
-   * */
-  static function VerifyCallback(Array $params) {
+   * @param Array $params ["data" => string, "mac" => string]
+   * @return Array ["returncode" => int, "returnmessage" => string]
+   */
+  static function verifyCallback(Array $params)
+  {
     $data = $params["data"];
     $requestMac = $params["mac"];
 
     $result = [];
-    $mac = hash_hmac("sha256", $data, Config::get()['key2']);
+    $mac = ZaloPayMacGenerator::compute($data, Config::get()['key2']);
 
     if ($mac != $requestMac) {
       $result['returncode'] = -1;
@@ -41,205 +43,197 @@ class ZaloPayHelper {
     return $result;
   }
 
-  /*
+  /**
    * Kiểm callback có hợp lệ hay không 
    * 
-   * Tham số: Array - là query string mà zalopay truyền vào redirect link ($_GET)
-   * Trả về: bool
+   * @param Array $data - là query string mà zalopay truyền vào redirect link ($_GET)
+   * @return bool
    *  - true: hợp lệ
    *  - false: không hợp lệ
-   * Xem thêm: https://docs.zalopay.vn/docs/gateway/api.html#Redirect
-   * */
-  static function VerifyRedirect(Array $data) {
-    $req_checksum = $data["checksum"];
-    $mac_data = $data['appid'].'|'.$data['apptransid'].'|'.$data['pmcid'].'|'.$data['bankcode'].'|'.$data['amount'].'|'.$data['discountamount']."|".$data["status"];
-    $checksum = hash_hmac("sha256", $mac_data, Config::get()['key2']);
+   */
+  static function verifyRedirect(Array $data)
+  {
+    $reqChecksum = $data["checksum"];
+    $checksum = ZaloPayMacGenerator::redirect($data);
 
-    return $req_checksum === $checksum;
+    return $reqChecksum === $checksum;
   }
 
-  /*
+  /**
    * Generate apptransid hoặc mrefundid
-   * - apptransid có dạng yyMMddxxxxx, xem thêm: https://docs.zalopay.vn/docs/general/overview.html#Thông-tin-đơn-hàng
-   * - mrefundid có dạng yyMMdd_appid_xxxxx, xem thêm: https://docs.zalopay.vn/docs/general/overview.html#Dữ-liệu-truyền-vào-api-2
-   * */
-  static function GenTransID() {
-    return date("ymd")."_".Config::get()['appid']."_".(++self::$uid);
+   * 
+   * @return string
+   *  - apptransid có dạng yyMMddxxxxx
+   *  - mrefundid có dạng yyMMdd_appid_xxxxx
+   */
+  static function genTransID()
+  {
+    return date("ymd")."_".Config::get()['appid']."_".(++self::$UID);
   }
 
-  /*
+  /**
    * Tạo Array chứa các tham số cần thiết để truyền vào API "tạo đơn hàng"
    * 
-   * Tham số: Array {
-   *   amount: long,
-   *   description: String,
-   *   bankcode: String (optional - default "zalopayapp")
-   *   appsuer: String (optional - default "demo")
-   *   item: String (optional - default "")
-   * }
-   * Trả về: Array
-   * Xem thêm: https://docs.zalopay.vn/docs/general/overview.html#Thông-tin-đơn-hàng
-   * */
-  static function NewOrder(Array $params) {
-    $embedata = [];
-
-    if (!empty(Ngrok::$public_url)) {
-      $embedata["forward_callback"] = Ngrok::$public_url . '/callback.php';
+   * @param Array $params [
+   *  "amount" => long,
+   *  "description" => string (optional),
+   *  "bankcode" => string (optional - default "zalopayapp"),
+   *  "appuser" => string (optional - default "demo"),
+   *  "item" => string (optional - default "")
+   * ]
+   * @return Array
+   */
+  static function newCreateOrderData(Array $params)
+  {
+    $embeddata = "";
+    
+    if (array_key_exists("embeddata", $params)) {
+      $embeddata = $params["embeddata"];
+    } else {
+      if (isset(Ngrok::$PUBLIC_URL)) {
+        $embeddata = JSON::encode([
+          "forward_callback" => Ngrok::$PUBLIC_URL . "/callback.php"
+        ]);
+      }
     }
 
     $order = [
       "appid" => Config::get()["appid"],
-      "apptime" => GetTimeStamp(),
+      "apptime" => getTimeStamp(),
       "apptransid" => self::GenTransID(),
-      "appuser" => isset($params["appuser"]) ? $params["appuser"] : "demo",
-      "item" => isset($params["item"]) ? $params["item"] : "",
-      "embeddata" => JSON::encode($embedata),
+      "appuser" => array_key_exists("appuser", $params) ? $params["appuser"] : "demo",
+      "item" => array_key_exists("item", $params) ? $params["item"] : "",
+      "embeddata" => $embeddata,      
+      "bankcode" =>  array_key_exists("bankcode", $params) ? $params["bankcode"] : "zalopayapp",
+      "description" => array_key_exists("description", $params) ? $params['description'] : "",
       "amount" => $params['amount'],
-      "description" => $params['description'],
-      "bankcode" =>  isset($params["bankcode"]) ? $params["bankcode"] : "zalopayapp"
     ];
 
     return $order;
   }
 
-  /*
+  /**
    * Nhận vào thông tin đơn hàng và tạo đơn hàng thông qua API "tạo đơn hàng"
    * 
-   * Tham số: Array - Thông tin đơn hàng
-   * Trả về: Array - Kết quả tạo đơn hàng
-   * Xem thêm: https://docs.zalopay.vn/docs/general/overview.html#Tạo-đơn-hàng
-   * */
-  static function CreateOrder(Array $order) {
-    $order['mac'] = ZaloPayMacGenerator::CreateOrder($order);
-    $result = Http::PostForm(Config::get()['api']['createorder'], $order);
+   * @param Array $order - Thông tin đơn hàng
+   * @return Array - Kết quả tạo đơn hàng
+   */
+  static function createOrder(Array $order) {
+    $order['mac'] = ZaloPayMacGenerator::createOrder($order);
+    $result = Http::postForm(Config::get()['api']['createorder'], $order);
     return $result;
   }
 
-  /*
-   * Nhận vào thông tin đơn hàng và tạo url để thanh toán cổng
-   * 
-   * Tham số: Array - Thông tin đơn hàng
-   * Trả về: String - là url để thanh toán cổng
-   * Xem thêm: https://docs.zalopay.vn/docs/gateway/api.html
-   * */
-  static function Gateway(Array $order) {
-    $order['mac'] = ZaloPayMacGenerator::CreateOrder($order);
-    $orderJSON = JSON::encode($order);
-
-    return Config::get()['api']['gateway'] . urlencode(base64_encode($orderJSON));
-  }
-
-  /*
+  /**
    * Tạo một Array chứa các thâm số cần thiết để truyền vào API "Quickpay"
    * 
-   * Tham số: Array - như hàm NewOrder, nhưng có thêm tham số paymentcodeRaw
-   * Trả về: Array
-   * Xem thêm: https://docs.zalopay.vn/docs/quickpay/api.html#Dữ-liệu-đầu-vào-api
-   * */
-  static function NewQuickPayOrder(Array $params) {
-    $order = self::NewOrder($params);
-    $order['userip'] = isset($params['userip']) ? $params['userip'] : "127.0.0.1";
-    openssl_public_encrypt($params['paymentcodeRaw'], $encrypted, self::$publickey);
+   * @param Array $params - như hàm NewOrder, nhưng có thêm tham số paymentcodeRaw
+   * @return Array
+   */
+  static function newQuickPayOrderData(Array $params) {
+    $order = self::newCreateOrderData($params);
+    $order['userip'] = array_key_exists('userip', $params) ? $params['userip'] : "127.0.0.1";
+    openssl_public_encrypt($params['paymentcodeRaw'], $encrypted, self::$PUBLIC_KEY);
     $order['paymentcode'] = base64_encode($encrypted);
-    $order['mac'] = ZaloPayMacGenerator::QuickPay($order, $params['paymentcodeRaw']);
+    $order['mac'] = ZaloPayMacGenerator::quickPay($order, $params['paymentcodeRaw']);
     return $order;
   }
 
-  /*
+  /**
    * Nhận vào thông tin đơn hàng và tiến hành thanh toán thông qua API "Quickpay"
    * 
-   * Tham số: Array - Thông tin đơn hàng
-   * Trả về: Array - Kết quả giao dịch
-   * Xem thêm: https://docs.zalopay.vn/docs/quickpay/api.html
-   * */
-  static function QuickPay(Array $order) {
-    $result = Http::PostForm(Config::get()['api']['quickpay'], $order);
+   * @param Array $order - Thông tin đơn hàng
+   * @return Array - Kết quả giao dịch
+   */
+  static function quickPay(Array $order) {
+    $result = Http::postForm(Config::get()['api']['quickpay'], $order);
     return $result;
   }
 
-  /*
+  /**
    * Nhận vào apptransid của đơn hàng và tiến hành truy vấn thông tin đơn hàng thông qua API "Truy vấn đơn hàng"
    * 
-   * Tham số: String - apptransid của đơn hàng
-   * Trả về: Array - Trạng thái đơn hàng
-   * Xem thêm: https://docs.zalopay.vn/docs/general/overview.html#Truy-vấn-trạng-thái-thanh-toán-của-đơn-hàng
-   * */
-  static function GetOrderStatus(string $apptransid) {
+   * @param String $apptransid - apptransid của đơn hàng
+   * @return Array - Trạng thái đơn hàng
+   */
+  static function getOrderStatus(string $apptransid) {
     $params = [
       "appid" => Config::get()['appid'],
       "apptransid" => $apptransid
     ];
-    $params["mac"] = ZaloPayMacGenerator::GetOrderStatus($params);
-    return Http::PostForm(Config::get()['api']['getorderstatus'], $params);
+    $params["mac"] = ZaloPayMacGenerator::getOrderStatus($params);
+    return Http::postForm(Config::get()['api']['getorderstatus'], $params);
   }
 
-  /*
+  /**
    * Tạo một Array chứa các thâm số cần thiết để truyền vào API "Refund"
    * 
-   * Tham số: Array - xem thêm ở link dưới
-   * Trả về: Array
-   * Xem thêm: https://docs.zalopay.vn/docs/general/overview.htmll#Hoàn-tiền-giao-dịch
-   * */
-  static function NewRefund(Array $params) {
-    $refundReq = [
+   * @param Array $params [
+   *  "zptransid" => string,
+   *  "amount" => long,
+   *  "description" => string
+   * ]
+   * @return Array
+   */
+  static function newRefundData(Array $params) {
+    $refundData = [
       "appid" => Config::get()['appid'],
+      "timestamp" => getTimestamp(),
+      "mrefundid" => self::genTransID(),
       "zptransid" => $params['zptransid'],
       "amount" => $params['amount'],
-      "description" => $params['description'],
-      "timestamp" => GetTimestamp(),
-      "mrefundid" => self::GenTransID()
+      "description" => $params['description']
     ];
 
-    $refundReq['mac'] = ZaloPayMacGenerator::Refund($refundReq);
-    return $refundReq;
+    $refundData['mac'] = ZaloPayMacGenerator::refund($refundData);
+    return $refundData;
   }
 
-  /*
+  /**
    * Nhận vào thông tin hoàn tiền và tiến hành hoàn tiền thông qua API "Hoàn tiền"
    * 
-   * Tham số: Array - Thông tin hoàn tiền
-   * Trả về: Array - Kết quả hoàn tiền
-   * Xem thêm: https://docs.zalopay.vn/docs/general/overview.htmll#Hoàn-tiền-giao-dịch
-   * */
-  static function Refund(Array $refundReq) {
-    $result = Http::PostForm(Config::get()['api']['refund'], $refundReq);
-    $result['mrefundid'] = $refundReq['mrefundid'];
+   * @param Array $refundData - Thông tin hoàn tiền
+   * @return Array - Kết quả hoàn tiền
+   */
+  static function refund(Array $refundData) {
+    $result = Http::postForm(Config::get()['api']['refund'], $refundData);
+    $result['mrefundid'] = $refundData['mrefundid'];
 
     return $result;
   }
 
-  /*
+  /**
    * Nhận vào mrefundid của yêu cầu hoàn tiền và tiến hành truy vấn thông tin hoàn tiền thông qua API "GetRefundStatus"
    * 
-   * Tham số: String - mrefundid của yêu cầu hoàn tiền
-   * Trả về: Array - Trạng thái hoàn tiền
-   * Xem thêm: https://docs.zalopay.vn/docs/general/overview.html#Truy-vấn-trạng-thái-hoàn-tiền---GetRefundStatus
-   * */
-  static function GetRefundStatus(String $mrefundid) {
+   * @param String - mrefundid của yêu cầu hoàn tiền
+   * @return Array - Trạng thái hoàn tiền
+   */
+  static function GetRefundStatus(String $mrefundid)
+  {
     $params = [
       "appid" => Config::get()['appid'],
       "mrefundid" => $mrefundid,
-      "timestamp" => GetTimestamp()
+      "timestamp" => getTimestamp()
     ];
 
-    $params['mac'] = ZaloPayMacGenerator::GetRefundStatus($params);
-    return Http::PostForm(Config::get()['api']['getrefundstatus'], $params);
+    $params['mac'] = ZaloPayMacGenerator::getRefundStatus($params);
+    return Http::postForm(Config::get()['api']['getrefundstatus'], $params);
   }
 
-  /*
+  /**
    * Lấy danh sách ngân hàng được hỗ trợ thông qua API "Getbanklist"
    * 
-   * Trả về: Array - Danh sách ngân hàng, xem thêm ở link dưới
-   * Xem thêm: https://docs.zalopay.vn/docs/general/overview.html#Lấy-danh-sách-các-ngân-hàng-được-hỗ-trợ
-   * */
-  static function GetBankList() {
+   * @return Array - Danh sách ngân hàng, xem thêm ở link dưới
+   */
+  static function getBankList()
+  {
     $params = [
       "appid" => Config::get()['appid'],
-      "reqtime" => GetTimestamp()
+      "reqtime" => getTimestamp()
     ];
 
-    $params['mac'] = ZaloPayMacGenerator::GetBankList($params);
-    return Http::PostForm(Config::get()['api']['getbanklist'], $params);
+    $params['mac'] = ZaloPayMacGenerator::getBankList($params);
+    return Http::postForm(Config::get()['api']['getbanklist'], $params);
   }
 }
 

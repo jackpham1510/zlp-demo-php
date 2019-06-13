@@ -5,13 +5,13 @@
 require_once "zalopay/helper.php";
 require_once "respository/refund_respository.php";
 
-$is_post_method = $_SERVER['REQUEST_METHOD'] === 'POST';
-
 session_start();
 
-if ($is_post_method) {
-  $refundReq = ZaloPayHelper::NewRefund($_POST);
-  $result = ZaloPayHelper::Refund($refundReq);
+$isPostMethod = $_SERVER['REQUEST_METHOD'] === 'POST';
+
+if ($isPostMethod) {
+  $refundData = ZaloPayHelper::newRefundData($_POST);
+  $result = ZaloPayHelper::refund($refundData);
 
   # returncode == 1: thành công
   # returncode > 1: đang xử lý
@@ -19,17 +19,17 @@ if ($is_post_method) {
   if ($result["returncode"] >= 1) {
     # Lấy trạng thái cuối cùng của refund
     while (1) {
-      $refund_status = ZaloPayHelper::GetRefundStatus($result["mrefundid"]);
-      $c = $refund_status["returncode"];
+      $refundStatus = ZaloPayHelper::getRefundStatus($result["mrefundid"]);
+      $c = $refundStatus["returncode"];
 
       if ($c < 2) {
         # Refund đã hoàn tất
         $status = $c === 1 ? 1 : -1; # returncode === 1: thành công, < 0: thất bại
         if ($status === 1) {
-          RefundRespository::New($refundReq);
+          RefundRespository::add($refundData);
         }
 
-        $result = $refund_status;
+        $result = $refundStatus;
         break;
       }
 

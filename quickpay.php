@@ -2,21 +2,21 @@
   require "zalopay/helper.php";
   require "respository/order_respository.php";
 
-  $is_post_method = $_SERVER['REQUEST_METHOD'] === 'POST';
+  $isPostMethod = $_SERVER['REQUEST_METHOD'] === 'POST';
   $result = NULL;
   $error = NULL;
 
-  if ($is_post_method) {
+  if ($isPostMethod) {
     $amount = (int)$_POST["amount"];
     if ($amount < 1000) {
       $error = "Số tiền không hợp lệ";
     } else {
-      $orderReq = ZaloPayHelper::NewQuickPayOrder($_POST);
-      $result = ZaloPayHelper::Quickpay($orderReq);
+      $orderData = ZaloPayHelper::newQuickPayOrderData($_POST);
+      $result = ZaloPayHelper::quickpay($orderData);
 
       # returncode > 1: đơn hàng đang được thanh toán
       if ($result["returncode"] > 0) {
-        OrderRespository::New($orderReq);
+        OrderRespository::add($orderData);
       }
     }
   }
@@ -61,7 +61,7 @@
     </div>
     <div class="form-group">
       <label for="exampleInputPassword1">Số tiền <span class="text-danger">*</span></label>
-      <input type="number" class="form-control" name="amount" placeholder="Nhập số tiền" value="50000">
+      <input type="number" class="form-control" name="amount" placeholder="Nhập số tiền" value="1000">
       <small class="form-text text-muted">Số tiền tối thiểu là 1000 VNĐ</small>
     </div>
     <button type="submit" class="btn btn-primary">Thanh toán</button>

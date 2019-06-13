@@ -2,37 +2,55 @@
 
 require_once "config/config.php";
 
-class ZaloPayMacGenerator {
-  static function Compute(string $data) {
-    return hash_hmac("sha256", $data, Config::get()['key1']);
+class ZaloPayMacGenerator
+{
+  static function compute(string $params, string $key = null)
+  {
+    if (is_null($key)) {
+      $key = Config::get()['key1'];
+    }
+    return hash_hmac("sha256", $params, $key);
   }
 
-  static function _createOrderMacData(Array $order) {
+  private static function createOrderMacData(Array $order)
+  {
     return $order["appid"]."|".$order["apptransid"]."|".$order["appuser"]."|".$order["amount"]
       ."|".$order["apptime"]."|".$order["embeddata"]."|".$order["item"];
   }
 
-  static function CreateOrder(Array $order) {
-    return self::Compute(self::_createOrderMacData($order));
+  static function createOrder(Array $order)
+  {
+    return self::compute(self::createOrderMacData($order));
   }
 
-  static function QuickPay(Array $order, String $paymentcodeRaw) {
-    return self::Compute(self::_createOrderMacData($order)."|".$paymentcodeRaw);
+  static function quickPay(Array $order, String $paymentcodeRaw)
+  {
+    return self::compute(self::createOrderMacData($order)."|".$paymentcodeRaw);
   }
 
-  static function Refund(Array $params) {
-    return self::Compute($params['appid'].'|'.$params['zptransid'].'|'.$params['amount'].'|'.$params['description'].'|'.$params['timestamp']);
+  static function refund(Array $params)
+  {
+    return self::compute($params['appid']."|".$params['zptransid']."|".$params['amount']."|".$params['description']."|".$params['timestamp']);
   }
 
-  static function GetOrderStatus(Array $params) {
-    return self::Compute($params['appid'].'|'.$params['apptransid'].'|'.Config::get()['key1']);
+  static function getOrderStatus(Array $params)
+  {
+    return self::compute($params['appid']."|".$params['apptransid']."|".Config::get()['key1']);
   }
 
-  static function GetRefundStatus(Array $params) {
-    return self::Compute($params['appid'].'|'.$params['mrefundid'].'|'.$params['timestamp']);
+  static function getRefundStatus(Array $params)
+  {
+    return self::compute($params['appid']."|".$params['mrefundid']."|".$params['timestamp']);
   }
 
-  static function GetBankList(Array $params) {
-    return self::Compute($params['appid'].'|'.$params['reqtime']);
+  static function getBankList(Array $params)
+  {
+    return self::compute($params['appid']."|".$params['reqtime']);
+  }
+
+  static function redirect(Array $params)
+  {
+    return self::compute($params['appid']."|".$params['apptransid']."|".$params['pmcid']."|".$params['bankcode']
+      ."|".$params['amount']."|".$params['discountamount']."|".$params["status"]);
   }
 }

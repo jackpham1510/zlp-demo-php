@@ -11,11 +11,13 @@
     if ($amount < 1000) {
       $error = "Số tiền không hợp lệ";
     } else {
-      $orderReq = ZaloPayHelper::NewOrder($_POST);
-      $order = ZaloPayHelper::CreateOrder($orderReq);
+      $orderData = ZaloPayHelper::newCreateOrderData($_POST);
+      $order = ZaloPayHelper::createOrder($orderData);
 
       if ($order["returncode"] === 1) {
-        OrderRespository::New($orderReq);
+        OrderRespository::add($orderData);
+      } else {
+        $error = "Tạo đơn hàng thất bại";
       }
     }
   }
@@ -55,7 +57,7 @@
     </div>
     <div class="form-group">
       <label for="exampleInputPassword1">Số tiền <span class="text-danger">*</span></label>
-      <input type="number" class="form-control" name="amount" placeholder="Nhập số tiền" value="50000">
+      <input type="number" class="form-control" name="amount" placeholder="Nhập số tiền" value="1000">
       <small class="form-text text-muted">Số tiền tối thiểu là 1000 VNĐ</small>
     </div>
     <button type="submit" class="btn btn-primary">Thanh toán</button>

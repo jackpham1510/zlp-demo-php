@@ -7,22 +7,22 @@ require_once "zalopay/helper.php";
 $data = $_GET;
 
 # Kiểm tra xem redirect có hợp lệ hay không
-$valid_redirect = ZaloPayHelper::VerifyRedirect($data);
+$isValidRedirect = ZaloPayHelper::verifyRedirect($data);
 
-if ($valid_redirect) {
+if ($isValidRedirect) {
   $apptransid = $data["apptransid"];
   
   # Kiểm tra xem đã nhận được callback chưa
   # - ở đây nếu đã nhận được callback thì trường "status" != 0
-  $order = OrderRespository::GetByApptransId($apptransid);
+  $order = OrderRespository::getByApptransId($apptransid);
   
   if ($order["status"] === "0") {
     # Nếu chưa nhận được callback thì gọi API truy vấn trạng thái đơn hàng 
-    $order_status = ZaloPayHelper::GetOrderStatus($apptransid);
+    $order_status = ZaloPayHelper::getOrderStatus($apptransid);
 
     # Cập nhật trạng thái đơn hàng
     $status = $order_status["returncode"] === 1 ? 1 : -1;
-    OrderRespository::Update([
+    OrderRespository::update([
       "apptransid" => $apptransid,
       "zptransid" => $order_status["zptransid"],
       "channel" => $order_status["pmcid"],
@@ -38,7 +38,7 @@ if ($valid_redirect) {
 <body>
   <?php include "components/navbar.php" ?>
   <div class="container mt-5">
-    <?php if ($valid_redirect) { ?>
+    <?php if ($isValidRedirect) { ?>
       <h4 class="text-center text-primary font-weight-bold mb-5">
         Kết quả giao dịch
       </h4>

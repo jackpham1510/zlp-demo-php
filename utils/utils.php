@@ -1,5 +1,5 @@
 <?php
 
-function GetTimestamp() {
+function getTimestamp() {
   return round(microtime(true) * 1000);
 }

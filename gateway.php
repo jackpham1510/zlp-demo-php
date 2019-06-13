@@ -2,24 +2,31 @@
   require "zalopay/helper.php";
   require "respository/order_respository.php";
 
-  $is_post_method = $_SERVER['REQUEST_METHOD'] === 'POST';
+  $isPostMethod = $_SERVER['REQUEST_METHOD'] === 'POST';
   $banklist = [];
+  $error = null;
 
-  if ($is_post_method) {
+  if ($isPostMethod) {
     $amount = (int)$_POST["amount"];
     if ($amount < 1000) {
       $error = "Số tiền không hợp lệ";
     } else {
-      $orderReq = ZaloPayHelper::NewOrder($_POST);
-      OrderRespository::New($orderReq);
-      
-      $orderurl = ZaloPayHelper::Gateway($orderReq);
+      $orderData = ZaloPayHelper::newCreateOrderData($_POST);
+      $order = ZaloPayHelper::createOrder($orderData);
 
+      if ($order["returncode"] === 1) {
+        OrderRespository::add($orderData);
+        $orderUrl = $order["orderurl"];
+        header("Location: ". $orderUrl);
+      }
+      else {
+        $error = "Tạo đơn hàng thất bại";
+      }
+      
       # Chuyển hướng sang trang cổng thanh toán
-      header("Location: ". $orderurl);
     }
   } else {
-    $banklist = ZaloPayHelper::GetBankList();
+    $banklist = ZaloPayHelper::getBankList();
   }
 ?>
 
@@ -66,7 +73,7 @@
     </div>
     <div class="form-group">
       <label for="exampleInputPassword1">Số tiền <span class="text-danger">*</span></label>
-      <input type="number" class="form-control" name="amount" placeholder="Nhập số tiền" value="50000">
+      <input type="number" class="form-control" name="amount" placeholder="Nhập số tiền" value="10000">
       <small class="form-text text-muted">Số tiền tối thiểu là 1000 VNĐ</small>
     </div>
     <button type="submit" class="btn btn-primary">Thanh toán</button>

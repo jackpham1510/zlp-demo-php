@@ -3,7 +3,7 @@
 require_once "json.php";
 
 class Http {
-  static function PostForm($url, $params) {
+  static function postForm($url, $params) {
     $context = stream_context_create([
       "http" => [
         "header" => "Content-type: application/x-www-form-urlencoded\r\n",
@@ -15,7 +15,7 @@ class Http {
     return JSON::decode(file_get_contents($url, false, $context));
   }
 
-  static function Get($url) {
+  static function getJSON($url) {
     return JSON::decode(file_get_contents($url));
   }
 }
