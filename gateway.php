@@ -11,7 +11,12 @@
     if ($amount < 1000) {
       $error = "Số tiền không hợp lệ";
     } else {
-      $orderData = ZaloPayHelper::newCreateOrderData($_POST);
+      $data = $_POST;
+      if ($data["bankcode"] === "ATM") {
+        $data["bankcode"] = "";
+        $data["embeddata"] = ["bankgroup" => "ATM"];
+      }
+      $orderData = ZaloPayHelper::newCreateOrderData($data);
       $order = ZaloPayHelper::createOrder($orderData);
 
       if ($order["returncode"] === 1) {
@@ -53,7 +58,7 @@
     <div class="form-group">
       <label for="bankcode">Ngân hàng</label>
       <select name="bankcode" class="form-control">
-        <option value="">Không chọn</option>
+        <option value="ATM">ATM</option>
         <?php
         foreach ($banklist["banks"] as $pmcid => $bankDTOs) {
           foreach ($bankDTOs as $bankDTO) {

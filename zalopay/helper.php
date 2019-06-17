@@ -85,16 +85,14 @@ class ZaloPayHelper
    */
   static function newCreateOrderData(Array $params)
   {
-    $embeddata = "";
+    $embeddata = [];
     
     if (array_key_exists("embeddata", $params)) {
       $embeddata = $params["embeddata"];
-    } else {
-      if (isset(Ngrok::$PUBLIC_URL)) {
-        $embeddata = JSON::encode([
-          "forward_callback" => Ngrok::$PUBLIC_URL . "/callback.php"
-        ]);
-      }
+    }
+    
+    if (isset(Ngrok::$PUBLIC_URL)) {
+      $embeddata["forward_callback"] = Ngrok::$PUBLIC_URL . "/callback.php";
     }
 
     $order = [
@@ -102,8 +100,8 @@ class ZaloPayHelper
       "apptime" => getTimeStamp(),
       "apptransid" => self::GenTransID(),
       "appuser" => array_key_exists("appuser", $params) ? $params["appuser"] : "demo",
-      "item" => array_key_exists("item", $params) ? $params["item"] : "",
-      "embeddata" => $embeddata,      
+      "item" => JSON::encode(array_key_exists("item", $params) ? $params["item"] : []),
+      "embeddata" => JSON::encode($embeddata),      
       "bankcode" =>  array_key_exists("bankcode", $params) ? $params["bankcode"] : "zalopayapp",
       "description" => array_key_exists("description", $params) ? $params['description'] : "",
       "amount" => $params['amount'],
