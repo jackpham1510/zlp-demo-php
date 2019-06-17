@@ -208,7 +208,7 @@ class ZaloPayHelper
    * @param String - mrefundid của yêu cầu hoàn tiền
    * @return Array - Trạng thái hoàn tiền
    */
-  static function GetRefundStatus(String $mrefundid)
+  static function getRefundStatus(String $mrefundid)
   {
     $params = [
       "appid" => Config::get()['appid'],
