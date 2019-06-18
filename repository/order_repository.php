@@ -2,7 +2,7 @@
 
 require_once "provider/provider.php";
 
-class OrderRespository {
+class OrderRepository {
   private static $ORDER_PER_PAGE = 10;
 
   static function add(Array $data) {

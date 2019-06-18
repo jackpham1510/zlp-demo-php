@@ -1,6 +1,6 @@
 <?php 
-  require "respository/order_respository.php";
-  require "respository/refund_respository.php";
+  require "repository/order_repository.php";
+  require "repository/refund_repository.php";
 
   function statusHTML($status) {
     switch ($status) { 
@@ -17,7 +17,7 @@
     $page = (int) $_GET['page'];
   }
 
-  $data = OrderRespository::paginate($page);
+  $data = OrderRepository::paginate($page);
 ?>
 
 <!DOCTYPE html>

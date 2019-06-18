@@ -2,7 +2,7 @@
 
 require_once "provider/provider.php";
 
-class RefundRespository {
+class RefundRepository {
   static function add(Array $data) {
     $conn = Provider::connect();
     $mrefundid = $data["mrefundid"];

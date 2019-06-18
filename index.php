@@ -1,6 +1,6 @@
 <?php 
   require "zalopay/helper.php";
-  require "respository/order_respository.php";
+  require "repository/order_repository.php";
   
   $is_post_method = $_SERVER['REQUEST_METHOD'] === 'POST';
   $order = NULL;
@@ -15,7 +15,7 @@
       $order = ZaloPayHelper::createOrder($orderData);
 
       if ($order["returncode"] === 1) {
-        OrderRespository::add($orderData);
+        OrderRepository::add($orderData);
       } else {
         $error = "Tạo đơn hàng thất bại";
       }

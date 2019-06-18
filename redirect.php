@@ -1,7 +1,7 @@
 <?php
 
 require_once "utils/json.php";
-require_once "respository/order_respository.php";
+require_once "repository/order_repository.php";
 require_once "zalopay/helper.php";
 
 $data = $_GET;
@@ -14,7 +14,7 @@ if ($isValidRedirect) {
   
   # Kiểm tra xem đã nhận được callback chưa
   # - ở đây nếu đã nhận được callback thì trường "status" != 0
-  $order = OrderRespository::getByApptransId($apptransid);
+  $order = OrderRepository::getByApptransId($apptransid);
   
   if ($order["status"] === "0") {
     # Nếu chưa nhận được callback thì gọi API truy vấn trạng thái đơn hàng 
@@ -22,7 +22,7 @@ if ($isValidRedirect) {
 
     # Cập nhật trạng thái đơn hàng
     $status = $order_status["returncode"] === 1 ? 1 : -1;
-    OrderRespository::update([
+    OrderRepository::update([
       "apptransid" => $apptransid,
       "zptransid" => $order_status["zptransid"],
       "channel" => $order_status["pmcid"],

@@ -1,7 +1,7 @@
 <?php
 
 require_once "utils/json.php";
-require_once "respository/order_respository.php";
+require_once "repository/order_repository.php";
 require_once "zalopay/helper.php";
 
 $isPostMethod = $_SERVER['REQUEST_METHOD'] === 'POST';
@@ -16,7 +16,7 @@ if ($isPostMethod) {
     if ($result['returncode'] === 1) {
       # Giao dịch thành công, tiền hành xử lý đơn hàng
       $data = JSON::decode($params["data"]);
-      OrderRespository::update([
+      OrderRepository::update([
         "apptransid" => $data["apptransid"],
         "zptransid" => $data["zptransid"],
         "channel" => $data["channel"],

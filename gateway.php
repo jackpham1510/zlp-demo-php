@@ -1,6 +1,6 @@
 <?php 
   require "zalopay/helper.php";
-  require "respository/order_respository.php";
+  require "repository/order_repository.php";
 
   $isPostMethod = $_SERVER['REQUEST_METHOD'] === 'POST';
   $banklist = [];
@@ -20,7 +20,7 @@
       $order = ZaloPayHelper::createOrder($orderData);
 
       if ($order["returncode"] === 1) {
-        OrderRespository::add($orderData);
+        OrderRepository::add($orderData);
         $orderUrl = $order["orderurl"];
         header("Location: ". $orderUrl);
       }

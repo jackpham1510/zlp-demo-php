@@ -3,7 +3,7 @@
 <?php 
 
 require_once "zalopay/helper.php";
-require_once "respository/refund_respository.php";
+require_once "repository/refund_repository.php";
 
 session_start();
 
@@ -26,7 +26,7 @@ if ($isPostMethod) {
         # Refund đã hoàn tất
         $status = $c === 1 ? 1 : -1; # returncode === 1: thành công, < 0: thất bại
         if ($status === 1) {
-          RefundRespository::add($refundData);
+          RefundRepository::add($refundData);
         }
 
         $result = $refundStatus;
