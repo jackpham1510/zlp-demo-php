@@ -38,10 +38,9 @@
   <form class="container mt-5" action="." method="POST">
     <?php if (isset($order)) { ?>
       <?php if ($order["returncode"] === 1) { ?>
-        <div class="d-flex align-items-center justify-content-center">
-          <div id="qrcontainer" class="text-center">
-            <img id="qrcode" class="border rounded"
-              src="https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=<?php echo $order["orderurl"] ?>&choe=UTF-8" />
+        <div id="qrcontainer" class="d-flex align-items-center justify-content-center" style="display: none !important">
+          <div class="text-center">
+            <div id="qrcode" class="border rounded p-4"></div>
             <p class="mt-3">
               <a id="web2app-link" href="<?php echo $order["orderurl"] ?>">
                 <small>Mở link này trên mobile để test Mobile Web To App</small>
@@ -49,6 +48,11 @@
             </p>
           </div>
         </div>
+        <script src="/static/js/qrcode.min.js"></script>
+        <script>
+          $('#qrcontainer').css('display', '');
+          new QRCode(document.querySelector('#qrcode'), '<?php echo $order['orderurl'] ?>');
+        </script>
       <?php } ?>
     <?php } ?>
     <div class="form-group">
